@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pagamento {{ payment.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <div class="page-wrap">
+      <div class="card">
+        <span id="new-badge" class="new-badge" aria-hidden="true"></span>
+        <div class="card-main">
+          <div class="qr-col">
+            {% if payment.qr_code %}
+              {% set parts = payment.qr_code.split('/') %}
+              {% set filename = parts[-1] %}
+              {% if filename.endswith('.png') %}
+                {% set name_no_ext = filename[:-4] %}
+              {% else %}
+                {% set name_no_ext = filename %}
+              {% endif %}
+              <img id="qr-image" src="{{ url_for('get_image', file_name=name_no_ext) }}" alt="QR Code" />
+            {% else %}
+              <img id="qr-image" src="{{ url_for('static', filename='img/qrcode.png') }}" alt="QR Code" />
+            {% endif %}
+          </div>
+
+          <div class="info-col">
+            <h1>Pedido realizado!</h1>
+            <div id="payment-status" class="status {{ 'paid' if payment.pago else 'pending' }}">{{ 'Pago' if payment.pago else 'Aguardando pagamento' }}</div>
+            <p>Para pagar, selecione a opção de <strong>Pix com QR Code</strong> no seu aplicativo de pagamentos e escaneie o código ao lado.</p>
+
+            <div class="purchase-value">
+              <img src="{{ url_for('static', filename='img/tag.svg') }}" alt="Ícone de tag" style="width:18px;height:18px;" />
+              <span>Compra de R$ <strong id="amount">{{ ('%.2f' % payment.valor).replace('.',',') }}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="footer-box">
+            <small>Este QR Code expira em</small>
+            <div><img src="{{ url_for('static', filename='img/clock.svg') }}" alt="Ícone relógio" style="width:20px;height:20px;vertical-align:middle;"/> <span class="highlight">30 minutos</span></div>
+          </div>
+
+          <div class="footer-box">
+            <small>Avisaremos quando o pagamento for confirmado</small>
+          </div>
+
+          <div class="footer-box">
+            <small>O número do seu pedido é</small>
+            <div><img src="{{ url_for('static', filename='img/basket.svg') }}" alt="Ícone do pedido" style="width:20px;height:20px;vertical-align:middle;"/> <span class="highlight" id="order-id">{{ payment.id }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- contador de pedidos removido -->
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script>
+    (function(){
+      const host = (typeof window !== 'undefined' && window.location.origin) || '{{ host }}';
+      const socket = io.connect(host);
+      socket.on('connect', function() {
+        console.log('Socket conectado — cliente payment_pix');
+      });
+
+      function formatMoney(value){
+        return Number(value).toFixed(2).replace('.',',');
+      }
+
+      socket.on('new_payment', function(data) {
+        // contador removido (não atualiza)
+
+        // lista de pedidos recentes removida (não faz nada)
+
+        // atualiza campos principais (QR, valor, order)
+        const payload = data.payment || data;
+        const valor = payload.valor ?? data.valor;
+        const id = payload.id ?? data.id;
+        const amountEl = document.getElementById('amount');
+        if(amountEl && typeof valor !== 'undefined') amountEl.innerText = formatMoney(valor);
+        const orderEl = document.getElementById('order-id');
+        if(orderEl && typeof id !== 'undefined') orderEl.innerText = id;
+        const qrEl = document.getElementById('qr-image');
+        if(qrEl){
+          if(data.qr_name){
+            qrEl.src = host + '/payments/pix/qr_code/' + data.qr_name;
+          } else if(payload.qr_code){
+            const parts = payload.qr_code.split('/');
+            const filename = parts[parts.length-1];
+            const nameNoExt = filename.endsWith('.png') ? filename.slice(0,-4) : filename;
+            qrEl.src = host + '/payments/pix/qr_code/' + nameNoExt;
+          }
+        }
+
+        // mostrar badge animado no card
+        const badge = document.getElementById('new-badge');
+        if(badge){
+          badge.innerText = 'Novo';
+          badge.classList.add('visible','pulse');
+          setTimeout(()=> badge.classList.remove('pulse'), 1100);
+          // esconder após alguns segundos
+          setTimeout(()=> badge.classList.remove('visible'), 5000);
+        }
+      });
+
+      socket.on('payment_confirmed', function(data){
+        // atualiza status visual do pagamento quando confirmado
+        const currentOrder = Number(document.getElementById('order-id')?.innerText || 0);
+        if(data.id === currentOrder){
+          const statusEl = document.getElementById('payment-status');
+          if(statusEl){
+            statusEl.innerText = 'Pago';
+            statusEl.classList.remove('pending');
+            statusEl.classList.add('paid');
+          } else {
+            // fallback: recarrega se não encontrar o elemento
+            location.reload();
+          }
+        }
+      });
+    })();
+  </script>
+</html>

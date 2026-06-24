@@ -1,0 +1,194 @@
+/* Stylesheet básico para a página de confirmação de pagamento */
+body {
+  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #222;
+}
+
+.title-confirmed {
+  color: #56A92F;
+  font-weight: 700;
+  font-size: 28px;
+  margin: 0 0 8px 0;
+}
+
+/* Ajustes simples para imagens */
+#qr-code img {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+/* Layout do container central semelhante à imagem de referência */
+.page-wrap {
+  background: #f6f7fb;
+  min-height: 100vh;
+  padding: 48px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 900px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(33,33,33,0.08);
+  padding: 24px;
+}
+
+/* Permite posicionar o badge dentro do card */
+.card {
+  position: relative;
+}
+
+.card-main {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.qr-col {
+  flex: 0 0 300px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.qr-col img {
+  width: 260px;
+  height: 260px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.info-col {
+  flex: 1 1 auto;
+}
+
+.info-col h1 {
+  margin: 0 0 8px 0;
+  color: #2b2b7a;
+}
+
+.purchase-value {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:#f3f5ff;
+  padding:8px 12px;
+  border-radius:8px;
+  margin-top:12px;
+}
+
+.card-footer {
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.footer-box {
+  background:#fff;
+  border-radius:8px;
+  padding:16px;
+  box-shadow: 0 2px 8px rgba(33,33,33,0.04);
+}
+
+.highlight {
+  color:#5b46e6;
+  font-weight:700;
+}
+
+/* Notificação simples de novo pedido (temporária) */
+.new-payment-notif {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: #5b46e6;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(33,33,33,0.12);
+  z-index: 9999;
+  font-weight: 600;
+}
+
+/* Badge discreto para novos pedidos no card */
+.new-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #5b46e6;
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(91,70,230,0.18);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 220ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+.new-badge.visible{
+  opacity: 1;
+  transform: scale(1);
+}
+.new-badge.pulse{
+  animation: badge-pulse 1s ease-in-out;
+}
+@keyframes badge-pulse{
+  0%{ transform: scale(1); }
+  50%{ transform: scale(1.12); }
+  100%{ transform: scale(1); }
+}
+
+/* Status do pagamento */
+.status{
+  display:inline-block;
+  margin-top:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:13px;
+}
+.status.pending{
+  background:#FFF3CD;
+  color:#856404;
+  border:1px solid #FFE8A1;
+}
+.status.paid{
+  background:#D4EDDA;
+  color:#155724;
+  border:1px solid #C3E6CB;
+}
+
+/* Botões usados no 404 */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 18px;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:700;
+  font-size:13px;
+}
+.btn-primary{
+  background:#5b46e6;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(91,70,230,0.12);
+}
+.btn-secondary{
+  background:#f1f1f3;
+  color:#4b4b56;
+}
+

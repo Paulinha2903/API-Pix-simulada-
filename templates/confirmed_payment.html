@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+
+    <title>Pagamento</title>
+  </head>
+  <body>
+    <main>
+      <div class="page-wrap">
+        <div class="card">
+          <span id="new-badge" class="new-badge" aria-hidden="true"></span>
+          <div class="card-main">
+            <div class="qr-col">
+              {% if payment and payment.qr_code %}
+                {% set filename = payment.qr_code.split('/')[-1] %}
+                <img id="qr-image" src="{{ url_for('static', filename='img/' + filename) }}" alt="QR Code" />
+              {% else %}
+                <img id="qr-image" src="{{ url_for('static', filename='img/qrcode.png') }}" alt="QR Code" />
+              {% endif %}
+            </div>
+
+            <div class="info-col">
+              <h1 class="title-confirmed">Pedido confirmado!</h1>
+              <div id="payment-status" class="status paid">Pago</div>
+              <p> Tudo certo com o seu pedido. O pagamento via Pix foi confirmado pelo seu banco.</p>
+
+              <div class="purchase-value">
+                <img src="{{ url_for('static', filename='img/tag.svg') }}" alt="Ícone de tag" />
+                <span>Compra de R$ <strong id="amount">{{ amount }}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="footer-box">
+              <small>Este QR Code expirou em</small>
+              <div>
+                <img src="{{ url_for('static', filename='img/clock.svg') }}" alt="Ícone relógio" />
+                <span class="highlight">30 minutos</span>
+              </div>
+            </div>
+
+            <div class="footer-box">
+              <small>Avisaremos quando o pagamento for confirmado</small>
+            </div>
+
+            <div class="footer-box">
+              <small>O número do seu pedido é</small>
+              <div>
+                <img src="{{ url_for('static', filename='img/basket.svg') }}" alt="Ícone do pedido" />
+                <span class="highlight" id="order-id">{{ order }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- contador de pedidos removido -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script>
+      (function(){
+        const host = '{{ host }}' || window.location.origin;
+        const socket = io.connect(host);
+        const currentOrder = {{ order }};
+        socket.on('connect', function(){
+          console.log('Socket conectado — confirmed_payment');
+        });
+        function formatMoney(v){ return Number(v).toFixed(2).replace('.',','); }
+
+        socket.on('new_payment', function(data){
+            // contador removido (não atualiza)
+
+          // atualiza lista de recentes (prepend)
+            // lista de pedidos recentes removida (não faz nada)
+
+          // atualiza campos principais (opcional): valor, order, qr
+          const payload = data.payment || data;
+          const valor = payload.valor ?? data.valor;
+          const id = payload.id ?? data.id;
+          const amountEl = document.getElementById('amount');
+          if(amountEl && typeof valor !== 'undefined') amountEl.innerText = formatMoney(valor);
+          const orderEl = document.getElementById('order-id');
+          if(orderEl && typeof id !== 'undefined') orderEl.innerText = id;
+          const qrEl = document.getElementById('qr-image');
+          if(qrEl){
+            if(data.qr_name){
+              qrEl.src = host + '/payments/pix/qr_code/' + data.qr_name;
+            } else if(payload.qr_code){
+              const parts = payload.qr_code.split('/');
+              const filename = parts[parts.length-1];
+              const nameNoExt = filename.endsWith('.png') ? filename.slice(0,-4) : filename;
+              qrEl.src = host + '/payments/pix/qr_code/' + nameNoExt;
+            }
+          }
+
+          // mostrar badge animado no card
+          const badge = document.getElementById('new-badge');
+          if(badge){
+            badge.innerText = 'Novo';
+            badge.classList.add('visible','pulse');
+            setTimeout(()=> badge.classList.remove('pulse'), 1100);
+            setTimeout(()=> badge.classList.remove('visible'), 5000);
+          }
+        });
+        socket.on('payment_confirmed', function(data){
+          if(data.id === currentOrder){
+            // atualiza a página quando o pedido atual for confirmado
+            location.reload();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
